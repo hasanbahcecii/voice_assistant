@@ -1,0 +1,55 @@
+# --- Python cache & compiled files ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# --- Virtual environments ---
+venv/
+.env/
+.venv/
+
+# --- Jupyter Notebook checkpoints ---
+.ipynb_checkpoints/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- OS-specific files ---
+.DS_Store
+Thumbs.db
+
+# --- IDE / Editor settings ---
+.vscode/
+.idea/
+
+# --- Build / Distribution ---
+build/
+dist/
+*.egg-info/
+*.egg
+
+# --- HuggingFace cache & models ---
+# HuggingFace transformers cache
+huggingface/
+transformers_cache/
+datasets_cache/
+.cache/
+# Model weights and checkpoints
+*.bin
+*.pt
+*.ckpt
+*.h5
+
+# --- Audio files (large datasets) ---
+*.wav
+*.mp3
+*.flac
+
+# --- FastAPI / Streamlit ---
+.streamlit/
+uvicorn.log
+
+# --- Misc ---
+*.sqlite3
