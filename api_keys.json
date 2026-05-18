@@ -1,0 +1,4 @@
+{
+    "openai_api_key": "your_openai_api_key_here",
+    "huggingface_api_key": "your_huggingface_api_key_here"
+}
