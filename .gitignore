@@ -54,4 +54,4 @@ uvicorn.log
 # --- Misc ---
 *.sqlite3
 
-api_keyss.json
+api_keys.json
