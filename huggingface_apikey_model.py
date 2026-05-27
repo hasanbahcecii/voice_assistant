@@ -3,7 +3,6 @@ import time
 import json
 from greetings import Greetings
 
-
 class AIModel:
 
     def __init__(self):
