@@ -80,7 +80,7 @@ def main():
                     print("Answered with greetings module.")
 
                 else:
-                    print("Answered with main OpenAI model.")
+                    print("Answered with main Hugging Face model.")
 
                 
 
