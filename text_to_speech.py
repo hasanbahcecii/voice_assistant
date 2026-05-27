@@ -7,7 +7,7 @@ import tempfile
 import os
 
 
-class text_to_speech:
+class TextToSpeech:
     def __init__(self):
         self.voice = "en-US-JennyNeural"
         pygame.mixer.init()
@@ -64,7 +64,7 @@ class text_to_speech:
 
 
 def main():
-    tts = text_to_speech()
+    tts = TextToSpeech()
     tts.speak("Hello, this is a test of the text to speech system. I hope you find it useful!")
     
     while True:
