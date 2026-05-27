@@ -46,7 +46,6 @@ class VoiceToText:
                 return None
             
 def main():
-    # INJECT YOUR HARDWARE INDEX HERE (e.g., 3). 
     # Find this using the sr.Microphone.list_microphone_names() script we ran earlier.
     TARGET_MIC_INDEX = 7 
     

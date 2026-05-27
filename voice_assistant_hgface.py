@@ -22,7 +22,7 @@ class VoiceAIModel(AIModel):
         if self.api_key_loaded:
             print("Setting up microphone.")
 
-            self.speech_recognizer.MicrophoneSetup()
+            self.speech_recognizer.AdjustMicrophone()
             self.wake_word_detector.MicrophoneSetup()
             print("VoiceAIModel is ready to listen for wake word. ")
             print("Say 'Hey Assistant' to activate the voice assistant.")
@@ -53,12 +53,12 @@ def main():
 
         while True:
             try:
-                if ai.wake_word_detector.ListenForWakeWord():
+                if not ai.wake_word_detector.ListenForWakeWord():
                     continue
                 print("Hey assistant detected! Listening for command...")
                 ai.tts.speak("Yes, how can I assist you?")
 
-                command = ai.speech_recognizer.ListenForCommand()
+                command = ai.speech_recognizer.SingleListen()
                 
                 if not command:
                     ai.tts.speak("Sorry, I didn't catch that. Please try again.")
