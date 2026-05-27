@@ -95,6 +95,13 @@ def main():
             print("Exiting the program. Goodbye!")
             break
         response, confidence = model.generate_response(question)
+
+        if confidence == 1.0:
+            print("Answered with greetings module.")
+        else:
+            print("Answered with main Hugging Face model.")
+           
+                
         print(f"Answer: {response} (Confidence: {confidence:.2f})\n")
 
 
