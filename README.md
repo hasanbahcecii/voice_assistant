@@ -118,7 +118,7 @@ Example `api_keys.json`:
 ## 1. Clone Repository
 
 ```bash
-git clone <https://github.com/hasanbahcecii/voice_assistant>
+git clone https://github.com/hasanbahcecii/voice_assistant
 cd voice_assistant
 ```
 
