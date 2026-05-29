@@ -55,3 +55,5 @@ uvicorn.log
 *.sqlite3
 
 api_keys.json
+hf_spaces_repo/
+voice-assistant/

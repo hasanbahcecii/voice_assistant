@@ -1,4 +1,0 @@
-gradio
-huggingface_hub
-SpeechRecognition
-edge-tts
