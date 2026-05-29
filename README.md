@@ -1,108 +1,101 @@
-# 🎙️ Voice Assistant Project
+# 🎙️ LLM-Powered Voice Assistant
 
-A modular Python-based Voice Assistant that supports:
+🌐 **[Live Demo — Hugging Face Spaces](https://hasanbahceci-voice-assistant.hf.space)**
 
-- 🎤 Voice recognition
-- 🔊 Text-to-speech
-- 🧠 OpenAI / Hugging Face integration
-- 👋 Wake word detection
-- 😊 Greeting system
-- 🔑 API key management
-- 🧩 Extensible architecture
-
-Designed with clean module separation for experimentation, AI assistant development, and future production-ready improvements.
+A modular, end-to-end voice assistant integrating real-time speech recognition (STT), dual-backend LLM response generation, and neural text-to-speech (TTS) — built for extensibility and production-ready improvement.
 
 ---
 
-# 📂 Project Structure
+## 🏗️ Architecture
 
-```bash
+```
+Microphone Input
+      ↓
+Speech Recognition (STT)
+      ↓
+Wake Word Detection
+      ↓
+AI Processing (OpenAI API / Hugging Face API)
+      ↓
+Text Response
+      ↓
+Text-to-Speech (Edge TTS)
+      ↓
+Audio Output
+```
+
+---
+
+## 📂 Project Structure
+
+```
 voice_assistant/
 │
-├── api_keys.json
-├── api_management.py
+├── api_keys.json               # API key storage (gitignored)
+├── api_management.py           # Centralized key management
 │
-├── greetings.json
-├── greetings.py
+├── greetings.json              # Greeting templates
+├── greetings.py                # Greeting logic
 │
-├── huggingface_apikey_model.py
-├── openai_apikey_model.py
+├── huggingface_apikey_model.py # Hugging Face LLM integration
+├── openai_apikey_model.py      # OpenAI LLM integration
 │
-├── scan_input_devices.py
-├── setup_test.py
+├── scan_input_devices.py       # Audio device scanner
+├── setup_test.py               # Environment validation
+├── structure.py                # Project config
 │
-├── structure.py
+├── voice_recognition.py        # STT module
+├── text_to_speech.py           # TTS module
+├── wake_word.py                # Wake word detection
 │
-├── text_to_speech.py
-├── voice_recognition.py
-├── wake_word.py
+├── voice_assistant_openai.py   # Full pipeline — OpenAI backend
+├── voice_assistant_hgface.py   # Full pipeline — Hugging Face backend
 │
-├── voice_assistant_hgface.py
-├── voice_assistant_openai.py
-│
+├── app.py                      # Gradio web interface (Hugging Face Spaces)
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-# 🚀 Features
+## 🚀 Features
 
-## 🎤 Speech Recognition
-- Real-time microphone input
-- Speech-to-text conversion
-- Input device scanning support
-
-## 🔊 Text-to-Speech (TTS)
-- AI-generated voice responses
-- Modular TTS pipeline
-- Easy provider replacement
-
-## 🧠 AI Model Integration
-
-### OpenAI Backend
-Supports OpenAI-powered assistant interaction.
-
-File:
-```python
-voice_assistant_openai.py
-```
-
-### Hugging Face Backend
-Supports Hugging Face inference APIs.
-
-File:
-```python
-voice_assistant_hgface.py
-```
+- **Real-time STT** — Microphone input via SpeechRecognition + PyAudio
+- **Dual LLM Backend** — Swap between OpenAI and Hugging Face with a single file swap
+- **Neural TTS** — Edge TTS (Microsoft Azure neural voices, no API key required)
+- **Wake Word Detection** — Assistant stays idle until triggered ("Hey Assistant")
+- **Modular Design** — Each component (STT, TTS, LLM, wake word) is independently replaceable
+- **Web Interface** — Gradio app deployed on Hugging Face Spaces
 
 ---
 
-# 👋 Wake Word Detection
+## 🛠️ Technologies
 
-Wake word functionality allows the assistant to stay idle until triggered by a keyword.
-
-Example:
-- "Hey Assistant"
-
-File:
-```python
-wake_word.py
-```
+| Component | Technology |
+|---|---|
+| Speech-to-Text | SpeechRecognition + PyAudio |
+| LLM (Cloud) | OpenAI API / Hugging Face Inference API |
+| Text-to-Speech | Edge TTS (edge-tts) |
+| Web Interface | Gradio |
+| Wake Word | Custom keyword detection |
 
 ---
 
-# 🔑 API Key Management
+## ⚙️ Installation
 
-Centralized API key management system.
+```bash
+git clone https://github.com/hasanbahcecii/voice_assistant
+cd voice_assistant
 
-Files:
-```python
-api_management.py
-api_keys.json
+python3 -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+pip install -r requirements.txt
 ```
 
-Example `api_keys.json`:
+### API Key Setup
+
+Create `api_keys.json` in the project root:
 
 ```json
 {
@@ -113,186 +106,74 @@ Example `api_keys.json`:
 
 ---
 
-# ⚙️ Installation
+## ▶️ Usage
 
-## 1. Clone Repository
-
-```bash
-git clone <https://github.com/hasanbahcecii/voice_assistant>
-cd voice_assistant
-```
-
----
-
-## 2. Create Virtual Environment
-
-```bash
-python3 -m venv venv
-```
-
-Activate environment:
-
-### Linux / macOS
-```bash
-source venv/bin/activate
-```
-
-### Windows
-```bash
-venv\Scripts\activate
-```
-
----
-
-## 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-# ▶️ Usage
-
-## Run OpenAI Assistant
-
+**OpenAI backend:**
 ```bash
 python voice_assistant_openai.py
 ```
 
----
-
-## Run Hugging Face Assistant
-
+**Hugging Face backend:**
 ```bash
 python voice_assistant_hgface.py
 ```
 
----
+**Gradio web interface (local):**
+```bash
+python app.py
+```
 
-# 🎧 Audio Device Setup
-
-Scan available microphone devices:
-
+**Scan audio devices:**
 ```bash
 python scan_input_devices.py
 ```
 
-Test setup:
-
-```bash
-python setup_test.py
-```
-
 ---
 
-# 🏗️ Architecture
+## ⚡ Performance
 
-The project follows a modular architecture:
+| Component | Estimated Latency |
+|---|---|
+| Speech Recognition (STT) | ~0.5 – 1.0s |
+| LLM API Response | ~1.0 – 2.0s |
+| TTS Generation | ~0.3 – 0.5s |
+| **End-to-End (local)** | **~2 – 4s** |
 
-```text
-Microphone Input
-        ↓
-Voice Recognition
-        ↓
-Wake Word Detection
-        ↓
-AI Processing (OpenAI / HF)
-        ↓
-Text Response
-        ↓
-Text-to-Speech
-        ↓
-Audio Output
-```
+Measured on local machine with OpenAI API backend.
 
----
-
-# 🛠️ Technologies Used
-
-- Python
-- OpenAI API
-- Hugging Face API
-- SpeechRecognition
-- PyAudio
-- Text-to-Speech libraries
-
----
-
-# 📈 Future Improvements
-
-- [ ] Streaming responses
-- [ ] Local LLM support
-- [ ] RAG integration
-- [ ] Memory system
-- [ ] GPU acceleration
-- [ ] Offline speech recognition
-- [ ] Multilingual support
-- [ ] Docker deployment
-- [ ] Web dashboard
-- [ ] Mobile integration
-
----
-
-# ⚡ Performance Considerations
-
-Current bottlenecks are likely:
-- Speech recognition latency
-- API response time
-- TTS generation latency
-
-Potential optimizations:
+**Planned optimizations:**
 - Async audio pipeline
 - Streaming token generation
-- Quantized local models
-- GPU inference
-- Voice activity detection (VAD)
-- Caching common responses
+- Voice Activity Detection (VAD)
+- Local LLM support (Ollama / llama.cpp)
+- Quantized models for reduced latency
 
 ---
 
-# 🔒 Security Notes
+## 🔒 Security
 
-- Never commit `api_keys.json`
-- Add secrets to `.gitignore`
-- Use environment variables in production
-
----
-
-# 🧪 Development Notes
-
-Recommended improvements for production-grade systems:
-
-- Structured logging
-- Config management
-- Async architecture
-- Unit/integration testing
-- Latency benchmarking
-- Containerization
-- CI/CD pipelines
+- `api_keys.json` is gitignored — never commit API keys
+- Use environment variables in production (`os.environ.get(...)`)
+- HF Spaces deployment uses Hugging Face Secrets
 
 ---
 
-# 🤝 Contributing
+## 📈 Roadmap
 
-Contributions, improvements, and feature ideas are welcome.
-
-Suggested workflow:
-
-```bash
-git checkout -b feature/new-feature
-git commit -m "Add new feature"
-git push origin feature/new-feature
-```
+- [ ] Streaming LLM responses
+- [ ] Local LLM support (offline mode)
+- [ ] RAG integration (document Q&A)
+- [ ] Conversation memory
+- [ ] Multilingual support (Turkish / English)
+- [ ] Docker deployment
+- [ ] CI/CD pipeline
 
 ---
 
-# 📜 License
+## 📜 License
 
-This project is open-source and available under the MIT License.
-
----
-
-Voice AI • LLM Systems 
+MIT License — open source, free to use and modify.
 
 ---
+
+*Voice AI · LLM Systems · Built with Python*
