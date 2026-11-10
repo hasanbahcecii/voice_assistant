@@ -79,3 +79,13 @@ def test_missing_provider_configuration_has_user_message():
     assert "not configured" in result[3]
     assert "OPENAI_API_KEY" not in result[3]
     assert result[4]["history"] == []
+
+
+def test_audio_only_request_accepts_null_text(monkeypatch):
+    monkeypatch.setattr(app, "recognize_file", lambda *_: "hello")
+    result = list(
+        app.voice_pipeline("recording.wav", None, backend="demo", speak=False, service=AssistantService(Settings()))
+    )[-1]
+    assert result[0] == "hello"
+    assert result[1].startswith("Hello")
+    assert result[3] == "Ready · greeting"

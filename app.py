@@ -14,7 +14,7 @@ def voice_pipeline(audio, text="", language="en-US", backend="auto", state=None,
     state = state or {}
     history = state.get("history", []) if state.get("language") == language and state.get("backend") == backend else []
     new_state = {"history": history, "language": language, "backend": backend}
-    transcript = text.strip()
+    transcript = (text or "").strip()
     answer = ""
     try:
         service = service or AssistantService()
