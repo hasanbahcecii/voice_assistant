@@ -57,3 +57,14 @@ uvicorn.log
 api_keys.json
 hf_spaces_repo/
 voice-assistant/
+
+# Credentials, local overrides and test artifacts
+api_key.json
+api_keys*.json
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/

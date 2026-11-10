@@ -1,70 +1,43 @@
+"""Match a complete greeting, never a substring of a real question."""
+
 import json
-import os
+import re
+from settings import ROOT
+
+
+def normalize(text, language="en-US"):
+    if language == "tr-TR":
+        text = text.replace("I", "ı").replace("İ", "i")
+    return " ".join(re.findall(r"[^\W_]+", text.casefold(), re.UNICODE))
 
 
 class Greetings:
-    def __init__(self):
-        self.greetings_file = "greetings.json"
-        self.greetings = self.load_greetings()
+    def __init__(self, path=None):
+        self.greetings_file = path or ROOT / "greetings.json"
+        try:
+            with open(self.greetings_file, encoding="utf-8") as source:
+                data = json.load(source)
+            self.greetings = {
+                normalize(key): replies
+                for key, replies in data.items()
+                if isinstance(replies, list) and replies and all(isinstance(x, str) for x in replies)
+            }
+        except (OSError, ValueError, AttributeError):
+            self.greetings = {"hello": ["Hello! How can I help?"], "hi": ["Hi! How can I help?"]}
 
-
-    def load_greetings(self):
-
-        if os.path.exists(self.greetings_file):
-            try:
-                with open(self.greetings_file, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except json.JSONDecodeError:
-                pass  # If the JSON is invalid, ignore the error and use default greetings
-                print("Error: Invalid JSON in greetings file.")
-
-        default_greetings = {
-            "hello": ["Hello! How can I assist you today?", "Hi there! What can I do for you?"],
-            "hi": ["Hi! How can I assist you today?", "Hello there! What can I do for you?"],
-            "morning": ["Good morning! How can I assist you today?", "Morning! What can I do for you?"],
-            "afternoon": ["Good afternoon! How can I help you?", "Afternoon! What can I do for you?"],
-            "evening": ["Good evening! How can I assist you?", "Evening! What can I do for you?"],
-            "night": ["Good night! How can I help you?", "Night! What can I do for you?"],
-            "goodbye": ["Goodbye! Have a great day!", "See you later! Take care!"],
-            "bye": ["Goodbye! Have a great day!", "See you later! Take care!"]
+    def answer_greeting(self, text, language="en-US"):
+        phrase = normalize(text, language)
+        if language == "tr-TR":
+            return {
+                "merhaba": "Merhaba! Nasıl yardımcı olabilirim?",
+                "selam": "Selam! Nasıl yardımcı olabilirim?",
+                "günaydın": "Günaydın! Nasıl yardımcı olabilirim?",
+            }.get(phrase)
+        aliases = {
+            "good morning": "morning",
+            "good afternoon": "afternoon",
+            "good evening": "evening",
+            "good night": "night",
         }
-
-        with open(self.greetings_file, "w", encoding="utf-8") as f:
-            json.dump(default_greetings, f, ensure_ascii=False, indent=4)
-
-        return default_greetings
-
-    def answer_greeting(self, text):
-
-        text = text.lower()
-        for key in self.greetings:
-            if key in text:
-                print(f"Greeting matched: {key}")  # Debug statement to show which greeting was matched
-                print(f"Available greetings for '{key}': {self.greetings[key]}")  # Debug statement to show available greetings
-                return self.greetings[key][0]  # Return the first greeting for the matched key
-       
-        return None
-
-
-def main():
-    greetings = Greetings()
-    print("Welcome to the Greeting Bot! Type a greeting to get a response.")
-
-    while True:
-        text = input("Write something: ")
-        
-        if text.lower() in ["exit", "quit"]:
-            print("Goodbye! Have a great day!")
-            break
-
-        
-        response = greetings.answer_greeting(text)
-
-        if response:
-            print(f"Assistant: {response}")
-        else:
-            print("Sorry, I didn't recognize that greeting. Please try again.")
-
-
-if __name__ == "__main__":    
-    main()
+        replies = self.greetings.get(aliases.get(phrase, phrase))
+        return replies[0] if replies else None

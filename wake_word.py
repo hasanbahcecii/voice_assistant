@@ -1,58 +1,62 @@
-from pdb import main
+"""Selectable cloud keyword detection or optional offline Vosk detection."""
 
+import json
+from pathlib import Path
 import speech_recognition as sr
-import time
+from settings import GOOGLE_STT_ENDPOINT
+from greetings import normalize
+from speech import SpeechError
+
 
 class WakeWordDetector:
-    def __init__(self):
+    def __init__(self, device_index=None, language="en-US", engine="google", model_path="", timeout=30):
         self.recognizer = sr.Recognizer()
-        self.recognizer.energy_threshold = 300
-        self.recognizer.pause_threshold = 0.5
-        self.wake_word = "Hey assistant"
+        self.recognizer.pause_threshold = 0.7
+        self.recognizer.operation_timeout = timeout
+        self.mic = sr.Microphone(device_index=device_index)
+        self.language = language
+        self.wake_word = "hey asistan" if language == "tr-TR" else "hey assistant"
+        self.model = None
+        if engine == "vosk":
+            if not Path(model_path).is_dir() or not model_path:
+                raise ValueError("Set WAKE_MODEL_PATH to a downloaded Vosk model directory.")
+            from vosk import Model
 
-    def MicrophoneSetup(self): 
-        print("Setting up microphone...") 
-        with sr.Microphone() as source:
-            print("Adjusting for ambient noise, please wait...")
-            self.recognizer.adjust_for_ambient_noise(source, duration=1)
-            print("Microphone setup complete.")  
-        self.mic = sr.Microphone()
+            self.model = Model(model_path)
+
+    def MicrophoneSetup(self):
+        with self.mic as source:
+            self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
 
     def ListenForWakeWord(self):
-        print(f"Listening for wake word: '{self.wake_word}'...")
         with self.mic as source:
-            while True:
-                try:
-                    audio = self.recognizer.listen(source, timeout=5)
-                    print("Processing audio...")
-                    text = self.recognizer.recognize_google(audio)
-                    print(f"Heard: {text}")
-                    if self.wake_word.lower() in text.lower():
-                        print("Hey Assistant detected!")
-                        return True
-                except sr.WaitTimeoutError:
-                    print("Listening timed out, retrying...")
-                except sr.UnknownValueError:
-                    print("Could not understand audio, retrying...")
-                except sr.RequestError as e:
-                    print(f"Could not request results; {e}")
-                time.sleep(0.1)
+            try:
+                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=4)
+                if self.model is None:
+                    text = self.recognizer.recognize_google(audio, language=self.language, endpoint=GOOGLE_STT_ENDPOINT)
+                else:
+                    from vosk import KaldiRecognizer
 
-
-def main():
-    detector = WakeWordDetector()
-    detector.MicrophoneSetup()
-    print("Ctrl + C to exit.")
-
-    try:
-        while True:
-            if detector.ListenForWakeWord():
-                print("Wake word detected! You can now give a command.")
-                time.sleep(2)  # Simulate processing time for command
-
-    except KeyboardInterrupt:
-        print("\nExiting wake word detector. Goodbye!")            
+                    detector = KaldiRecognizer(self.model, 16000)
+                    detector.AcceptWaveform(audio.get_raw_data(convert_rate=16000, convert_width=2))
+                    text = json.loads(detector.FinalResult()).get("text", "")
+                words = normalize(text).split()
+                target = self.wake_word.split()
+                return any(words[i : i + len(target)] == target for i in range(len(words)))
+            except (sr.WaitTimeoutError, sr.UnknownValueError):
+                return False
+            except sr.RequestError as exc:
+                raise SpeechError(
+                    "Wake-word recognition is unavailable. Try WAKE_ENGINE=vosk for offline wake detection."
+                ) from exc
 
 
 if __name__ == "__main__":
-    main()
+    detector = WakeWordDetector()
+    detector.MicrophoneSetup()
+    try:
+        while not detector.ListenForWakeWord():
+            pass
+        print("Wake word detected.")
+    except KeyboardInterrupt:
+        pass

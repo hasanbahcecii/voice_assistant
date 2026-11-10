@@ -1,74 +1,40 @@
-import speech_recognition as sr 
-import time 
+"""Bounded microphone capture with adaptive energy and pause-based VAD."""
+
+import speech_recognition as sr
+from settings import GOOGLE_STT_ENDPOINT
+from speech import SpeechError
+
 
 class VoiceToText:
-    # Pass the working device_index via the constructor
-    def __init__(self, device_index=None):
+    def __init__(self, device_index=None, language="en-US", timeout=30):
         self.recognizer = sr.Recognizer()
-        self.recognizer.energy_threshold = 300 
-        self.recognizer.pause_threshold = 0.5  
-        
-        # OPTIMIZATION: Instantiate the microphone OS-binding ONLY ONCE.
-        # This prevents PyAudio from probing ALSA devices on every single listen loop.
+        self.recognizer.dynamic_energy_threshold = True
+        self.recognizer.pause_threshold = 0.7
+        self.recognizer.operation_timeout = timeout
+        self.language = language
         self.mic = sr.Microphone(device_index=device_index)
 
     def AdjustMicrophone(self):
-        print("Initializing microphone and adjusting for ambient noise...")
-        # Reuse the pre-initialized mic object
         with self.mic as source:
-            print("Adjusting for ambient noise, please wait...")
-            self.recognizer.adjust_for_ambient_noise(source, duration=1)
-            print("Adjustment complete.")
+            self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
 
     def SingleListen(self):
-        print("Speaking... Please say something.")
-
-        # Reuse the pre-initialized mic object
         with self.mic as source:
             try:
-                # Listen with timeouts to prevent the thread from hanging indefinitely
-                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)  
-                print("Processing your speech...")
-                
-                # Cloud API call (Consider replacing with local Vosk/Whisper for Edge AI)
-                command = self.recognizer.recognize_google(audio, language="en-US")
-                print(f"You said: {command}")
-                return command
-                
-            except sr.WaitTimeoutError:
-                print("Listening timed out while waiting for phrase to start.")
+                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=30)
+                return self.recognizer.recognize_google(audio, language=self.language, endpoint=GOOGLE_STT_ENDPOINT)
+            except (sr.WaitTimeoutError, sr.UnknownValueError):
                 return None
-            except sr.UnknownValueError:
-                print("Sorry, I could not understand the audio. (Check if correct mic is targeted)")
-                return None
-            except sr.RequestError as e:
-                print(f"Network/API Error: Could not request results from Google; {e}")
-                return None
-            
-def main():
-    # Find this using the sr.Microphone.list_microphone_names() script we ran earlier.
-    TARGET_MIC_INDEX = 7 
-    
-    voice_to_text = VoiceToText(device_index=TARGET_MIC_INDEX)
-    voice_to_text.AdjustMicrophone()
-    
-    while True:
-        print("\n 1. Single Listen  2. Exit")
-        choice = input("Enter your choice: ")
-        
-        if choice == "1":
-            command = voice_to_text.SingleListen()
-            if command:
-                print(f"Recognized Command: {command}")
-            else:
-                print("No command recognized. Please try again.")
-        elif choice == "2":
-            print("Exiting...")
-            break
-        else:
-            print("Invalid choice. Please try again.")
-            
-        time.sleep(1)       
+            except sr.RequestError as exc:
+                raise SpeechError("Speech recognition is unavailable. Check your connection.") from exc
+
+    ListenForCommand = SingleListen
+
 
 if __name__ == "__main__":
-    main()
+    from settings import Settings
+
+    config = Settings.from_env()
+    listener = VoiceToText(config.microphone_index, config.language, config.timeout)
+    listener.AdjustMicrophone()
+    print(listener.SingleListen())

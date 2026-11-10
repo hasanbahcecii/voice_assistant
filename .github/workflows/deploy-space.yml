@@ -1,0 +1,33 @@
+name: Deploy Hugging Face Space
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hf-space-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: huggingface
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Require deployment credentials
+        env:
+          HF_DEPLOY_TOKEN: ${{ secrets.HF_DEPLOY_TOKEN }}
+        run: test -n "$HF_DEPLOY_TOKEN" || { echo 'Missing HF_DEPLOY_TOKEN secret; Space was not updated.'; exit 1; }
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip check
+      - run: ruff check .
+      - run: pytest -q
+      - run: python scripts/deploy_space.py --dry-run
+      - name: Deploy tested files
+        env:
+          HF_DEPLOY_TOKEN: ${{ secrets.HF_DEPLOY_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID || 'hasanbahceci/voice-assistant' }}
+        run: python scripts/deploy_space.py --space "$HF_SPACE_ID"

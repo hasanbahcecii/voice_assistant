@@ -1,0 +1,12 @@
+[
+  "README.md",
+  "requirements.txt",
+  "app.py",
+  "settings.py",
+  "providers.py",
+  "assistant_service.py",
+  "speech.py",
+  "greetings.py",
+  "greetings.json",
+  "LICENSE"
+]
