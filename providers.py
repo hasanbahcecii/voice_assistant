@@ -1,6 +1,9 @@
 """Lazy, streaming model adapters. No microphone or model downloads on import."""
 
+import logging
 from settings import ConfigurationError
+
+logger = logging.getLogger(__name__)
 
 
 class ProviderError(RuntimeError):
@@ -79,8 +82,18 @@ class HuggingFaceProvider:
                     if chunk.choices and chunk.choices[0].delta.content:
                         yield chunk.choices[0].delta.content
         except Exception as exc:
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            # Only the class and status are logged; raw provider errors can contain credentials.
+            logger.warning("Hugging Face inference failed: %s; HTTP status=%s", type(exc).__name__, status)
+            messages = {
+                401: "Hugging Face authentication failed. Contact the app owner.",
+                402: "Hugging Face inference credits are unavailable. Contact the app owner.",
+                403: "Hugging Face inference access was denied. Contact the app owner.",
+                404: "The selected Hugging Face model is unavailable. Contact the app owner.",
+                429: "Hugging Face request limit reached. Please try again later.",
+            }
             raise ProviderError(
-                "Hugging Face inference failed. Check HF_TOKEN, HF_MODEL, provider access and quota."
+                messages.get(status, "Hugging Face inference is unavailable. Please try again later.")
             ) from exc
 
 

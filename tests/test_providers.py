@@ -76,3 +76,54 @@ def test_huggingface_chat_contract_and_stream(monkeypatch):
     assert list(provider.stream([{"role": "user", "content": "selam"}], "tr-TR")) == ["Merhaba"]
     assert captured["model"] == "test/model"
     assert captured["stream"] is True
+
+
+@pytest.mark.parametrize(
+    "status,expected", [(401, "authentication"), (402, "credits"), (403, "access"), (404, "model"), (429, "limit")]
+)
+def test_hf_errors_are_actionable_without_leaking_details(monkeypatch, caplog, status, expected):
+    import huggingface_hub
+
+    class Client:
+        def __init__(self, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            pass
+
+        def chat_completion(self, **kwargs):
+            response = httpx.Response(status, request=httpx.Request("POST", "https://router.huggingface.co/test"))
+            raise httpx.HTTPStatusError(
+                "private-provider-detail fake-test-token", request=response.request, response=response
+            )
+
+    monkeypatch.setattr(huggingface_hub, "InferenceClient", Client)
+    with pytest.raises(ProviderError, match=expected) as error:
+        list(
+            HuggingFaceProvider(Settings(huggingface_api_key="fake-test-token", hf_model="test/model")).stream(
+                [], "en-US"
+            )
+        )
+    assert "private-provider-detail" not in str(error.value) + caplog.text
+    assert "fake-test-token" not in str(error.value) + caplog.text
+    assert str(status) in caplog.text
+
+
+def test_hf_non_http_error_is_logged_without_raw_message(monkeypatch, caplog):
+    import huggingface_hub
+
+    def fail(**kwargs):
+        raise ValueError("private-provider-detail")
+
+    monkeypatch.setattr(huggingface_hub, "InferenceClient", fail)
+    with pytest.raises(ProviderError):
+        list(
+            HuggingFaceProvider(Settings(huggingface_api_key="fake-test-token", hf_model="test/model")).stream(
+                [], "en-US"
+            )
+        )
+    assert "ValueError" in caplog.text
+    assert "private-provider-detail" not in caplog.text
