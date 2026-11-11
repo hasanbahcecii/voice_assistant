@@ -68,3 +68,5 @@ api_keys*.json
 .ruff_cache/
 .coverage
 htmlcov/
+
+*.gguf

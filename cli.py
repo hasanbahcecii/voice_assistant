@@ -13,7 +13,7 @@ def main(backend=None, text_only=False):
     parser.add_argument(
         "--text", action="store_true", default=text_only, help="Use the keyboard; no microphone or TTS required"
     )
-    parser.add_argument("--backend", choices=["auto", "demo", "openai", "huggingface"], default=backend)
+    parser.add_argument("--backend", choices=["auto", "local", "demo", "openai", "huggingface"], default=backend)
     parser.add_argument("--language", choices=["en-US", "tr-TR"])
     parser.add_argument("--microphone", type=int)
     args = parser.parse_args()

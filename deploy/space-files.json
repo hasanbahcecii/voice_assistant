@@ -4,9 +4,12 @@
   "app.py",
   "settings.py",
   "providers.py",
+  "local_model.py",
   "assistant_service.py",
   "speech.py",
   "greetings.py",
   "greetings.json",
-  "LICENSE"
+  "LICENSE",
+  "GEMMA_TERMS.txt",
+  "MODEL_NOTICE.txt"
 ]

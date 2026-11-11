@@ -98,7 +98,7 @@ def test_cli_listens_to_command_after_wake_and_tts_failure_does_not_exit(monkeyp
 
 
 def test_missing_credentials_returns_failure_before_audio_setup(monkeypatch, capsys):
-    monkeypatch.setattr(Settings, "from_env", lambda: Settings())
+    monkeypatch.setattr(Settings, "from_env", lambda: Settings(free_only=False))
     monkeypatch.setattr(sys, "argv", ["voice_assistant_openai.py"])
     assert cli.main("openai") == 1
     assert "OPENAI_API_KEY" in capsys.readouterr().out

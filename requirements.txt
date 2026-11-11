@@ -1,4 +1,7 @@
-# Web/Spaces runtime: no PyAudio, pygame, torch or model weights.
+# CPU-only inference wheel; no GPU, torch or paid API required.
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+--only-binary=llama-cpp-python
+llama-cpp-python==0.3.36
 gradio==6.15.1
 openai==2.37.0
 huggingface_hub==1.16.4

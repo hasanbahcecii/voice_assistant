@@ -30,10 +30,10 @@ def test_environment_keys_win_and_do_not_leak_in_repr(tmp_path, monkeypatch):
     assert "file-hf" not in repr(settings)
 
 
-def test_placeholder_does_not_enable_real_provider(tmp_path):
+def test_placeholder_never_selects_paid_provider(tmp_path):
     path = tmp_path / "keys.json"
     path.write_text(json.dumps({"openai_api_key": "your_openai_api_key_here"}))
-    assert Settings.from_env(path).resolve_backend() == "demo"
+    assert Settings.from_env(path).resolve_backend() == "local"
 
 
 @pytest.mark.parametrize("value", ["[]", "bad json"])
@@ -56,6 +56,6 @@ def test_invalid_settings(kwargs):
 
 def test_selected_cloud_provider_requires_credentials():
     with pytest.raises(ConfigurationError, match="OPENAI_API_KEY"):
-        create_provider(Settings(), "openai")
+        create_provider(Settings(free_only=False), "openai")
     with pytest.raises(ConfigurationError, match="HF_MODEL"):
-        create_provider(Settings(huggingface_api_key="fake"), "huggingface")
+        create_provider(Settings(free_only=False, huggingface_api_key="fake"), "huggingface")

@@ -6,7 +6,7 @@ import sys
 
 
 def setup_test(local=False):
-    modules = ["gradio", "openai", "huggingface_hub", "speech_recognition", "edge_tts"]
+    modules = ["gradio", "openai", "huggingface_hub", "speech_recognition", "edge_tts", "llama_cpp"]
     if local:
         modules += ["pyaudio", "pygame"]
     missing = []

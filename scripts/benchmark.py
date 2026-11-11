@@ -12,7 +12,7 @@ from assistant_service import AssistantService
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--backend", choices=["demo", "openai", "huggingface"], default="demo")
+    parser.add_argument("--backend", choices=["local", "demo", "openai", "huggingface"], default="demo")
     parser.add_argument("--runs", type=int, default=5)
     args = parser.parse_args()
     if not 1 <= args.runs <= 20:

@@ -15,9 +15,9 @@ class DemoProvider:
 
     def stream(self, messages, language):
         if language == "tr-TR":
-            yield "Demo modu etkin. Gerçek sohbet için bir OpenAI veya Hugging Face sağlayıcısı yapılandırın."
+            yield "Demo modu etkin. Ücretsiz yapay zekâ sohbeti için Local seçeneğini kullanın."
         else:
-            yield "Demo mode is active. Configure an OpenAI or Hugging Face provider for real conversations."
+            yield "Demo mode is active. Select Local for free AI conversations."
 
 
 class OpenAIProvider:
@@ -97,10 +97,24 @@ class HuggingFaceProvider:
             ) from exc
 
 
+class LocalProvider:
+    name = "local"
+
+    def __init__(self, settings):
+        self.settings = settings
+
+    def stream(self, messages, language):
+        from local_model import stream_local
+
+        yield from stream_local(self.settings, messages)
+
+
 def create_provider(settings, selected=None):
     name = settings.resolve_backend(selected)
     return (
-        {"demo": DemoProvider, "openai": OpenAIProvider, "huggingface": HuggingFaceProvider}[name](settings)
+        {"local": LocalProvider, "demo": DemoProvider, "openai": OpenAIProvider, "huggingface": HuggingFaceProvider}[
+            name
+        ](settings)
         if name != "demo"
         else DemoProvider()
     )

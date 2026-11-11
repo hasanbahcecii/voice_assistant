@@ -24,6 +24,8 @@ def voice_pipeline(audio, text="", language="en-US", backend="auto", state=None,
                 return
             transcript = recognize_file(audio, language, service.settings.max_audio_seconds, service.settings.timeout)
         stt_ms = (time.perf_counter() - started) * 1000
+        if service.settings.resolve_backend(backend) == "local":
+            yield transcript, "", None, "Preparing local AI… First use may take longer.", new_state, ""
         final = None
         for reply in service.stream_reply(transcript, history, language, backend):
             answer = reply.text
@@ -70,17 +72,25 @@ def build_demo():
     settings = Settings.from_env()
     with gr.Blocks(title="Voice Assistant", delete_cache=(300, 600)) as demo:
         gr.Markdown(
-            "# 🎙️ Voice Assistant\nSpeak or type in English or Turkish. Choose a configured provider for real conversations; Demo uses prepared responses."
+            "# 🎙️ Voice Assistant\nSpeak or type in English or Turkish. Free local AI runs on this Space CPU. No API key or paid inference is needed. Demo uses prepared responses."
         )
         gr.Markdown(
-            "Audio is sent to Google for transcription and response text to Microsoft Edge TTS when voice output is enabled. Selected model providers receive your messages and recent session history."
+            "Audio is sent to Google for transcription and response text to Microsoft Edge TTS when voice output is enabled. Local AI keeps model inference inside this Space."
         )
+        if settings.local_model_format == "gemma":
+            gr.Markdown(
+                "Local AI: Gemma 3 4B. Use is subject to the [Gemma model terms](https://ai.google.dev/gemma/terms) "
+                "and [use restrictions](https://ai.google.dev/gemma/prohibited_use_policy). "
+                "[Full terms copy](https://huggingface.co/spaces/hasanbahceci/voice-assistant/blob/main/GEMMA_TERMS.txt)."
+            )
         session = gr.State({})
         with gr.Row():
             language = gr.Dropdown(
                 [("English", "en-US"), ("Türkçe", "tr-TR")], value=settings.language, label="Language"
             )
-            backend = gr.Dropdown(["auto", "demo", "openai", "huggingface"], value=settings.backend, label="Provider")
+            backend = gr.Dropdown(
+                ["local", "demo"], value="local" if settings.backend != "demo" else "demo", label="Provider"
+            )
         audio = gr.Audio(
             sources=["microphone", "upload"],
             type="filepath",

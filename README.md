@@ -8,32 +8,44 @@ sdk_version: 6.15.1
 python_version: '3.13'
 app_file: app.py
 pinned: false
+suggested_hardware: cpu-basic
+models:
+  - google/gemma-3-4b-it
+preload_from_hub:
+  - unsloth/gemma-3-4b-it-GGUF gemma-3-4b-it-Q4_K_M.gguf 5a3566e716d80f709ed7b79817eaf7733d2a1fce
 license: mit
 ---
 
 # Voice Assistant
 
 A browser and local CLI voice assistant with English/Turkish speech recognition,
-streaming OpenAI or Hugging Face chat, and Edge TTS. Web and CLI share one response
-service. Recent conversation history belongs to each session and is capped at eight
-turns by default.
+streaming CPU-only Gemma chat, and Edge TTS. No paid inference API or API key is needed.
+Web and CLI share one response service. Recent history belongs to each session.
 
 [Live Space](https://huggingface.co/spaces/hasanbahceci/voice-assistant)
 
-## Modes
+## Free operation
 
-- **Demo:** no LLM credentials needed. Complete greetings receive prepared replies;
-  other questions explain that this is a demo. It does not pretend to answer with a model.
-- **OpenAI:** hosted chat completions using the current Python SDK interface.
-- **Hugging Face:** hosted chat inference via `InferenceClient`, not a local extractive
-  QA model. Choose an `HF_MODEL` and `HF_PROVIDER` combination available to your account.
-- **Auto:** uses OpenAI when its key is set, otherwise Hugging Face when its token is set,
-  otherwise Demo. A broken or incomplete real-provider configuration reports an error;
-  it does not silently replace the provider with canned answers.
+- **Local (default):** Gemma 3 4B Instruct, Q4_K_M GGUF, runs inside the Space on
+  CPU Basic (2 vCPU / 16 GB). Model weights are about 2.5 GB and preloaded during build.
+  The model revision is pinned. One shared model instance uses two CPU threads and a
+  4096-token context. Replies stream, with at most 256 output tokens.
+- **Auto:** also selects Local, even when old API credentials exist.
+- **Demo:** prepared greetings and an honest demo message; no generated answers.
+- **Free-only protection:** `FREE_ONLY=true` is the default. OpenAI and hosted HF API
+  calls are blocked, including explicit API requests. The browser only offers Local
+  and Demo. Legacy paid adapters remain available only to deployments deliberately
+  configured with `FREE_ONLY=false`; they are not needed for this Space.
 
-Only **wake detection** can optionally run offline with Vosk. Google STT, hosted LLMs
-and Edge TTS require a network connection. Local audio uses SpeechRecognition's adaptive
-energy threshold and pause detection; there is no separate neural VAD model.
+Speech recognition uses Google and voice output uses Microsoft Edge TTS without a
+paid key. These external services need internet access and may impose limits or change;
+this is not an offline application or a guarantee of unlimited service. Local chat keeps
+messages inside the Space runtime. Browser audio is sent to Google; reply text is sent to
+Microsoft when voice output is enabled. Turn voice output off to use text only.
+
+CPU inference is slower than hosted GPU services. The first request loads the model;
+long answers and a busy queue take longer. Free Spaces may sleep when unused. Small
+models can make factual and language mistakes, so verify important answers.
 
 ## Install and run the web app
 
@@ -49,9 +61,9 @@ python app.py
 ```
 
 The web app records audio in the **browser**; the server needs no microphone, PyAudio,
-pygame, PyTorch or downloaded model weights. You can type instead of recording and turn
+pygame or PyTorch. The GGUF model is downloaded on first local use outside Spaces. You can type instead of recording and turn
 off voice output for a text-only request. Typed text takes precedence if both are supplied.
-Select English or Turkish, choose a provider, then Send. Clear conversation resets session
+Select English or Turkish, choose Local or Demo, then Send. Clear conversation resets session
 history. Changing language or provider also resets it. Record at most 30 seconds; uploads
 are limited to 10 MB. Model output appears as tokens arrive, followed by audio.
 
@@ -62,15 +74,22 @@ Use shell environment variables locally and **Settings → Secrets/Variables** o
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `BACKEND` | `auto` | `auto`, `demo`, `openai`, `huggingface` |
+| `BACKEND` | `local` | `local`, `auto` (local), `demo` |
+| `FREE_ONLY` | `true` | Blocks paid API providers |
+| `LOCAL_MODEL_FORMAT` | `gemma` | `gemma` or `chatml`; must match weights |
+| `LOCAL_THINKING_PREFILL` | `false` | Empty thinking block for original Qwen3 / Qwen3.5 only |
+| `LOCAL_THREADS` | `2` | CPU threads, 1–4 |
+| `LOCAL_MODEL_REPO` | `unsloth/gemma-3-4b-it-GGUF` | Public GGUF repository |
+| `LOCAL_MODEL_FILE` | `gemma-3-4b-it-Q4_K_M.gguf` | Weight filename |
+| `LOCAL_MODEL_REVISION` | `5a3566e716d80f709ed7b79817eaf7733d2a1fce` | Pinned model commit |
 | `ASSISTANT_LANGUAGE` | `en-US` | `en-US` or `tr-TR` |
 | `OPENAI_API_KEY` | empty | OpenAI credential (Secret) |
 | `OPENAI_MODEL` | `gpt-3.5-turbo` | Preserved original model; set an accessible chat model |
 | `HF_TOKEN` | empty | Token with inference-provider permission (Secret) |
 | `HUGGINGFACE_API_KEY` | empty | Legacy alias for `HF_TOKEN` |
-| `HF_MODEL` | empty | Required HF chat model ID; no large model is loaded into the Space |
+| `HF_MODEL` | empty | Legacy hosted HF model ID (disabled in free-only mode) |
 | `HF_PROVIDER` | `auto` | Inference provider supporting that model |
-| `API_TIMEOUT` | `30` | Per-request timeout in seconds, 1–120 |
+| `API_TIMEOUT` | `120` | Per-request timeout in seconds, 1–120 |
 | `MAX_TOKENS` | `256` | Maximum generated tokens, 1–2048 |
 | `HISTORY_TURNS` | `8` | Retained recent turns, 1–32 |
 | `MICROPHONE_INDEX` | system default | Local CLI input device |
@@ -80,8 +99,8 @@ Use shell environment variables locally and **Settings → Secrets/Variables** o
 For example:
 
 ```bash
-export BACKEND=openai
-export OPENAI_API_KEY='your-real-key'
+export BACKEND=local
+export FREE_ONLY=true
 export ASSISTANT_LANGUAGE=tr-TR
 python app.py
 ```
@@ -175,8 +194,9 @@ Space unless a sync workflow is configured.
 2. Add GitHub Actions secret **`HF_DEPLOY_TOKEN`** with write access to the target Space.
    This is a deployment credential; it is separate from inference credentials.
 3. Optionally set GitHub variable `HF_SPACE_ID`; default: `hasanbahceci/voice-assistant`.
-4. Configure model credentials on the **Space itself**. No credential → Demo. For OpenAI,
-   set `OPENAI_API_KEY`; for HF inference set `HF_TOKEN` plus variable `HF_MODEL`.
+4. On the Space, set `BACKEND=local` and keep `FREE_ONLY=true`. No model credentials
+   are required. Keep CPU Basic hardware; do not select paid upgrades. The README
+   preloads pinned model weights at build time.
 5. Push approved code changes to GitHub. This runs CI but does **not** deploy the Space.
    After approving a live release, manually run **Deploy Hugging Face Space**.
 6. The workflow installs dependencies, runs tests/lint, uploads the allowlisted web bundle,
@@ -212,3 +232,29 @@ provider quotas and billing remain controlled by the owner's account.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+
+## Compare CPU models
+
+Run the six-question screening set with a downloaded GGUF, under the same CPU limit:
+
+```bash
+python scripts/run_guarded.py --cpus 2 --reserve-gib 3 -- python scripts/benchmark_local.py /path/to/model.gguf --gemma --stable --output benchmark.json
+```
+
+Use `--gemma --stable` for the default Gemma model. Use `--thinking-model` for
+the original Qwen3 0.6B/1.7B models or `--qwen35` for Qwen3.5. The 2507 Qwen Instruct
+model uses its plain non-thinking template. The output records actual answers, first-token
+latency, total latency and peak process RSS. Inspect factual correctness and Turkish
+quality; timing alone is not a model-quality benchmark. This short screening set does not
+establish reliability on every task.
+
+
+## Model license
+
+The application code is MIT licensed. Gemma model weights are separately subject to the
+[Gemma Terms of Use](https://ai.google.dev/gemma/terms) and
+[Prohibited Use Policy](https://ai.google.dev/gemma/prohibited_use_policy). These use
+restrictions apply to use through this hosted assistant. A full copy of the model terms
+is provided in `GEMMA_TERMS.txt`; see `MODEL_NOTICE.txt` for model attribution.
+The app downloads the pinned Unsloth GGUF conversion without modifying the weights.

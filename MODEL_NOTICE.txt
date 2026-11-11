@@ -1,0 +1,7 @@
+Gemma is provided under and subject to the Gemma Terms of Use found at ai.google.dev/gemma/terms.
+Original model: google/gemma-3-4b-it, Google.
+GGUF conversion: unsloth/gemma-3-4b-it-GGUF, Unsloth.
+Revision: 5a3566e716d80f709ed7b79817eaf7733d2a1fce
+The application does not modify model weights.
+Use restrictions: https://ai.google.dev/gemma/prohibited_use_policy
+Application source code remains separately MIT licensed.
