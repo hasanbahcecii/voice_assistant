@@ -50,11 +50,11 @@ class AssistantService:
             provider = self.provider_factory(self.settings, backend)
             prompt = (
                 "Sen yardımcı bir sesli asistansın. Türkçe, doğru ve kısa yanıtlar ver. "
-                "Kullanıcının istediği biçime uy; aksi halde en fazla iki kısa cümle kullan. "
+                "Kullanıcı ayrıntı istemezse tek kısa cümleyle sadece sorulan bilgiyi ver. Kullanıcının istediği biçime uy. "
                 "Takip sorularında önceki mesajlardaki bilgileri kullan. Bilmediğin bilgiyi tahmin etme."
                 if language == "tr-TR"
                 else "You are a helpful voice assistant. Give concise, accurate answers in English. "
-                "Use one or two short sentences unless the user requests another format. "
+                "Answer only what was asked in one short sentence unless the user requests details or another format. "
                 "Use the previous messages to answer follow-up questions. If you do not know, say so."
             )
             messages = [{"role": "system", "content": prompt}, *cleaned, {"role": "user", "content": text}]

@@ -118,8 +118,8 @@ def build_demo():
             cancels=[send_event],
             api_name="clear",
         )
-        language.change(lambda: {}, outputs=session, cancels=[send_event], api_name=False)
-        backend.change(lambda: {}, outputs=session, cancels=[send_event], api_name=False)
+        language.change(lambda: {}, outputs=session, api_name=False)
+        backend.change(lambda: {}, outputs=session, api_name=False)
     return demo.queue(max_size=20)
 
 
